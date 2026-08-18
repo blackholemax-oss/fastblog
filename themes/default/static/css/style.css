@@ -1,0 +1,74 @@
+:root {
+  --color-bg: #fdfdfd;
+  --color-text: #2c2c2c;
+  --color-muted: #777;
+  --color-accent: #1a73e8;
+  --color-border: #e5e5e5;
+  --max-width: 720px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.7;
+}
+
+.site-header, .site-main, .site-footer {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.site-header { padding-top: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border); }
+.site-title { margin: 0; font-size: 1.8rem; }
+.site-title a { color: var(--color-text); text-decoration: none; }
+.site-description { margin: 0.35rem 0 0; color: var(--color-muted); }
+
+.site-main { padding-top: 1.5rem; padding-bottom: 3rem; }
+
+.post-item { padding: 1rem 0; border-bottom: 1px solid var(--color-border); }
+.post-item-title { margin: 0 0 0.3rem; font-size: 1.25rem; }
+.post-item-title a { color: var(--color-accent); text-decoration: none; }
+.post-meta { margin: 0; font-size: 0.85rem; color: var(--color-muted); }
+.tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: #eef3fb;
+  color: var(--color-accent);
+  font-size: 0.75rem;
+}
+.post-summary { margin: 0.4rem 0 0; color: var(--color-muted); }
+.post-empty { color: var(--color-muted); }
+
+.post-title { margin-bottom: 0.3rem; }
+.post-content img { max-width: 100%; }
+.post-content pre {
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: #f6f8fa;
+}
+.post-content code { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.9em; }
+.post-content .highlight { background: #f6f8fa; border-radius: 6px; }
+.post-toc {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 0.9rem;
+}
+.post-toc ul { margin: 0.3rem 0; padding-left: 1.2rem; }
+.post-toc a { color: var(--color-accent); text-decoration: none; }
+
+.site-footer {
+  padding: 1.5rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
