@@ -1,4 +1,4 @@
-# StaticGen 示例配置（入库模板，请勿直接修改）
+# fastblog 示例配置（入库模板，请勿直接修改）
 #
 # 使用方式：复制本文件为 config.yaml 后按需修改：
 #   cp config.example.yaml config.yaml
@@ -7,9 +7,9 @@
 # 可安全存放 deploy.remote_url 等私有信息。所有路径均相对于项目根目录。
 
 site:
-  title: "我的静态博客"
-  description: "由 StaticGen 驱动的静态博客"
-  author: "Anonymous"
+  title: "BlackHoleMax的开发日志"
+  description: "由 fastblog 驱动的静态博客"
+  author: "blackholemax-oss"
   language: "zh-CN"
 
 build:
@@ -24,7 +24,6 @@ serve:
 
 deploy:
   enabled: false           # 设为 true 时每次 build 后自动推送
-  remote: "origin"
-  remote_url: ""           # 远程仓库地址（HTTPS/SSH），deploy 命令必填
-  branch: "gh-pages"       # 推送目标分支（main 或 gh-pages）
-  auto_actions: true       # 自动生成 .github/workflows 模板
+  remote: "github-io"      # 产物仓库的远程名
+  remote_url: ""           # 远程仓库地址（HTTPS/SSH），远程不存在时必填
+  branch: "main"           # 推送目标分支（配合 GitHub Actions 自动发布）

@@ -1,6 +1,6 @@
-# StaticGen
+# fastblog
 
-StaticGen 是一个静态博客生成器 CLI 工具：在 `content/` 目录撰写 Markdown，
+fastblog 是一个静态博客生成器 CLI 工具：在 `content/` 目录撰写 Markdown，
 一条命令即可渲染为完整的静态 HTML 网站，并一键同步到 GitHub 部署。
 
 ## 特性
@@ -36,7 +36,7 @@ cp config.example.yaml config.yaml
 # 4.1 热部署预览：文件变更后自动构建并刷新浏览器
 .venv/bin/python -m staticgen.cli serve --watch
 
-# 5. 构建并推送部署（需先在 config.yaml 配置 deploy.remote_url）
+# 5. 构建并推送部署（需先在 config.yaml 配置 deploy.remote 指向产物仓库的远程名）
 .venv/bin/python -m staticgen.cli deploy
 ```
 
@@ -46,7 +46,7 @@ cp config.example.yaml config.yaml
 | --- | --- |
 | `build` | 解析内容、渲染页面，输出到 `output/`（每次自动清空，幂等） |
 | `serve [--host H] [--port P] [--watch] [--no-browser]` | 本地预览 `output/`；`--watch` 开启热部署，监听内容/主题/插件/配置变更后自动构建 |
-| `deploy [--message M]` | 构建 + 自动生成 Actions 工作流 + 强制推送到远程分支 |
+| `deploy [--message M]` | 构建 + 恢复 Pages 工作流 + 提交并强制推送到远程分支 |
 
 全局参数：`--config <path>` 指定配置文件（需置于子命令前），`--version` 查看版本。
 
@@ -61,7 +61,7 @@ fastblog/
 ├── config.example.yaml   # 示例配置（入库模板）
 ├── config.yaml           # 用户本地配置（.gitignore 排除，不入库）
 ├── requirements.txt
-└── .github/workflows/    # 自动生成的 Actions 模板
+└── .github/workflows/    # （可选）本地 Actions 模板，不随仓库提交
 ```
 
 > 配置隔离：仓库只跟踪 `config.example.yaml`；用户配置 `config.yaml`
@@ -95,7 +95,7 @@ slug: my-first-post      # 可选，默认由标题生成
 | `site` | `title / description / author / language` | 站点全局信息，注入模板 `site` 变量 |
 | `build` | `content_dir / output_dir / theme` | 内容/输出目录与主题名 |
 | `serve` | `host / port / open_browser` | 本地预览参数 |
-| `deploy` | `enabled / remote / remote_url / branch / auto_actions` | `enabled` 为 true 时每次 build 自动推送；`remote_url` 为 deploy 必填；`branch` 支持 `main`/`gh-pages` |
+| `deploy` | `enabled / remote / remote_url / branch` | `enabled` 为 true 时每次 build 自动推送；`remote_url` 为远程不存在时必填；`branch` 为推送目标分支（如 `main`，配合 GitHub Actions 自动发布） |
 
 配置缺失的字段自动回退默认值；主题目录不存在时自动回退内置 `default` 主题。
 
@@ -127,13 +127,12 @@ class MyPlugin(Plugin):
 
 ## GitHub Actions
 
-`build` / `deploy` 会在项目根目录自动生成 `.github/workflows/staticgen.yml`：
-推送 `main` 分支后，CI 自动安装依赖、构建站点并发布到配置的 `deploy.branch`（默认 `gh-pages`）。
+部署采用「产物仓库 + GitHub Actions」模式：产物仓库（如
+`username.github.io`）的 main 分支只包含静态网页文件与
+`.github/workflows/pages.yml`（由 `deploy` 命令自动恢复写入）。
 
-> 该自动生成的工作流默认被 `.gitignore` 排除、不会随仓库提交。
-> 如确需让 GitHub Actions 生效，可手动执行：
->
-> ```bash
-> git add -f .github/workflows/staticgen.yml
-> git commit -m "chore: 提交 StaticGen Actions 工作流"
-> ```
+`deploy` 推送 main 后，线上 workflow 将仓库内容直接发布到 GitHub Pages
+（GitHub Pages 设置中构建源需选择 GitHub Actions）。
+
+> 注意：`build` 会清空 `output/`，连带删除其中的 `pages.yml`；
+> `deploy` 命令会在推送前自动恢复该文件，无需手动处理。

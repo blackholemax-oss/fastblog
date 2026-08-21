@@ -1,7 +1,7 @@
 name: default
-author: StaticGen Team
+author: blackholemax-oss
 version: 1.0.0
 # 父主题名；null 表示顶级主题，无父级。
 # 子主题通过同名模板覆盖父主题，实现模板继承。
 parent: null
-description: StaticGen 内置默认主题，提供极简排版与代码高亮样式。
+description: fastblog 内置默认主题，提供极简排版与代码高亮样式。

@@ -20,12 +20,12 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from staticgen.config import load_config
-from staticgen.deploy import GitHubDeployer, ensure_actions_workflow
+from staticgen.deploy import GitHubDeployer
 from staticgen.engine import BlogGenerator
 
 
 def _build_site(config) -> int:
-    """仅生成静态站点与 Actions 工作流，不触发自动部署。
+    """仅生成静态站点，不触发自动部署。
 
     Args:
         config: 全局配置对象。
@@ -33,17 +33,13 @@ def _build_site(config) -> int:
     Returns:
         int: 生成的文章数量。
     """
-    count = BlogGenerator(config).generate()
-    if config.deploy.auto_actions:
-        ensure_actions_workflow(config)
-    return count
+    return BlogGenerator(config).generate()
 
 
 def _build(args: argparse.Namespace) -> int:
     """执行站点构建流程。
 
-    构建完成后，若 ``deploy.auto_actions`` 开启则自动生成 GitHub Actions
-    工作流模板；若 ``deploy.enabled`` 开启则自动推送部署。
+    构建完成后，若 ``deploy.enabled`` 开启则自动推送部署。
 
     Args:
         args: 解析后的命令行参数（含 ``--config``）。
@@ -67,6 +63,10 @@ def _build(args: argparse.Namespace) -> int:
 def _deploy(args: argparse.Namespace) -> int:
     """构建站点并推送到远程 GitHub 仓库。
 
+    构建后自动恢复 Pages 工作流（``output/.github/workflows/pages.yml``），
+    提交全部变更并强制推送到配置的远程分支（``deploy.branch``），
+    由 GitHub Actions 完成线上发布。
+
     Args:
         args: 解析后的命令行参数（含 ``--config``、``--message``）。
 
@@ -77,8 +77,6 @@ def _deploy(args: argparse.Namespace) -> int:
 
     try:
         count = BlogGenerator(config).generate()
-        if config.deploy.auto_actions:
-            ensure_actions_workflow(config)
         GitHubDeployer(config).deploy(args.message)
     except RuntimeError as exc:
         print(f"[错误] 部署失败：{exc}")
@@ -237,14 +235,14 @@ def build_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         prog="staticgen",
-        description="StaticGen —— 将 Markdown 渲染为静态 HTML 网站的生成器。",
+        description="fastblog —— 将 Markdown 渲染为静态 HTML 网站的生成器。",
     )
     parser.add_argument(
         "--config",
         default=None,
         help="配置文件路径（默认自动查找项目根目录 config.yaml）。",
     )
-    parser.add_argument("--version", action="version", version="StaticGen 0.1.0")
+    parser.add_argument("--version", action="version", version="fastblog 0.1.0")
 
     subparsers = parser.add_subparsers(dest="command", required=True, help="可用子命令")
 

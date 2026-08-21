@@ -1,10 +1,11 @@
 """GitHub Pages 部署模块。
 
-基于 GitPython 实现静态产物的自动部署：
+基于 GitPython 实现静态产物的自动部署（GitHub Actions 发布模式）：
 
 - 输出目录不存在仓库时自动 ``git init``（初始分支取 ``deploy.branch``）；
-- 全量暂存并提交，强制推送到配置的远程分支（``main`` 或 ``gh-pages``）；
-- 推送前自动生成 ``.github/workflows/`` 模板，实现“代码提交即自动构建”。
+- 构建后自动恢复 ``.github/workflows/pages.yml``（构建会清空输出目录，
+  该文件是 GitHub Actions 触发发布的关键）；
+- 全量暂存并提交，强制推送到配置的远程分支（``main``）。
 
 所有 Git 操作均包裹异常处理并输出用户友好的中文提示。
 """
@@ -20,67 +21,43 @@ from git.exc import InvalidGitRepositoryError
 
 from staticgen.config import Config
 
-WORKFLOW_TEMPLATE = """name: StaticGen Build & Deploy
+PAGES_WORKFLOW = """name: Deploy static content to Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Remove workflow files from site
+        run: rm -rf .github
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Build static site
-        run: python -m staticgen.cli build
-
-      - name: Deploy to {{branch}}
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./output
-          publish_branch: {{branch}}
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 """
-
-
-def ensure_actions_workflow(config: Config) -> Path:
-    """在项目根目录生成 GitHub Actions 工作流模板。
-
-    Args:
-        config: 全局配置对象。
-
-    Returns:
-        Path: 生成的工作流文件绝对路径。
-
-    Raises:
-        RuntimeError: 文件写入失败时抛出中文错误信息。
-    """
-    target = config.root_dir / ".github" / "workflows" / "staticgen.yml"
-    content = WORKFLOW_TEMPLATE.replace("{{branch}}", config.deploy.branch)
-    try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
-    except OSError as exc:
-        raise RuntimeError(f"生成 GitHub Actions 工作流失败（{exc}）。") from exc
-    print(f"[信息] 已生成 GitHub Actions 工作流：{target}")
-    return target
 
 
 class GitHubDeployer:
@@ -153,6 +130,26 @@ class GitHubDeployer:
         print(f"[信息] 已添加远程仓库 {name} -> {url}。")
         return remote
 
+    def _ensure_pages_workflow(self) -> None:
+        """确保 Pages 工作流存在于输出目录。
+
+        ``build`` 每次清空输出目录，会删除
+        ``.github/workflows/pages.yml``；该文件是 GitHub Actions
+        自动发布的关键，缺失时按内置模板重新写入。
+
+        Raises:
+            RuntimeError: 文件写入失败时抛出中文错误信息。
+        """
+        target = self.output / ".github" / "workflows" / "pages.yml"
+        if target.exists():
+            return
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(PAGES_WORKFLOW, encoding="utf-8")
+        except OSError as exc:
+            raise RuntimeError(f"恢复 Pages 工作流失败（{exc}）。") from exc
+        print(f"[信息] 已恢复 Pages 工作流：{target}")
+
     def _commit_with_fallback(self, repo: Repo, message: str) -> bool:
         """提交全部变更；缺少 Git 身份时自动写入本地身份并重试。
 
@@ -211,8 +208,9 @@ class GitHubDeployer:
         repo = self._get_repo()
         remote = self._ensure_remote(repo)
         branch = self.config.deploy.branch
-        message = commit_message or f"StaticGen build {datetime.now():%Y-%m-%d %H:%M:%S}"
+        message = commit_message or f"fastblog build {datetime.now():%Y-%m-%d %H:%M:%S}"
 
+        self._ensure_pages_workflow()
         self._commit_with_fallback(repo, message)
 
         try:

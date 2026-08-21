@@ -17,7 +17,7 @@ import yaml
 # 默认值常量
 # ---------------------------------------------------------------------------
 DEFAULT_SITE_TITLE = "My Static Blog"
-DEFAULT_SITE_DESCRIPTION = "Powered by StaticGen"
+DEFAULT_SITE_DESCRIPTION = "Powered by fastblog"
 DEFAULT_SITE_AUTHOR = "Anonymous"
 DEFAULT_SITE_LANGUAGE = "en"
 
@@ -32,7 +32,6 @@ DEFAULT_OPEN_BROWSER = True
 DEFAULT_DEPLOY_ENABLED = False
 DEFAULT_DEPLOY_REMOTE = "origin"
 DEFAULT_DEPLOY_BRANCH = "gh-pages"
-DEFAULT_AUTO_ACTIONS = True
 
 
 # ---------------------------------------------------------------------------
@@ -74,20 +73,18 @@ class DeployConfig:
         enabled: 为 ``True`` 时每次 build 自动推送。
         remote: 远程仓库名。
         remote_url: 远程仓库地址（HTTPS/SSH）；为空且远程不存在时部署失败。
-        branch: 推送目标分支（``main`` 或 ``gh-pages``）。
-        auto_actions: 为 ``True`` 时自动生成 GitHub Actions 工作流模板。
+        branch: 推送目标分支（如 ``main``，配合 GitHub Actions 自动发布）。
     """
 
     enabled: bool = DEFAULT_DEPLOY_ENABLED
     remote: str = DEFAULT_DEPLOY_REMOTE
     remote_url: Optional[str] = None
     branch: str = DEFAULT_DEPLOY_BRANCH
-    auto_actions: bool = DEFAULT_AUTO_ACTIONS
 
 
 @dataclass
 class Config:
-    """StaticGen 全局配置聚合对象。
+    """fastblog 全局配置聚合对象。
 
     Attributes:
         root_dir: 项目根目录（config.yaml 所在目录）的绝对路径。
@@ -188,7 +185,6 @@ def _merge_with_defaults(raw: Dict[str, Any]) -> Dict[str, Any]:
             "remote": deploy.get("remote", DEFAULT_DEPLOY_REMOTE),
             "remote_url": deploy.get("remote_url") or None,
             "branch": deploy.get("branch", DEFAULT_DEPLOY_BRANCH),
-            "auto_actions": _as_bool(deploy.get("auto_actions"), DEFAULT_AUTO_ACTIONS),
         },
     }
 
