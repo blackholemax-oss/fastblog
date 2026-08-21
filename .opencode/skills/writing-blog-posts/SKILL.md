@@ -65,10 +65,10 @@ slug: english-kebab-case   # 必填，小写英文连字符，用于 URL
 
 ```powershell
 # 1. 本地构建验证（确认无渲染错误、新文章出现在 output/）
-& .venv-win\Scripts\python.exe -m staticgen.cli build
+& .venv-win\Scripts\python.exe -m fastblog.cli build
 
 # 2. 部署到线上（自动恢复 pages.yml、提交产物、推送触发 Actions 发布）
-& .venv-win\Scripts\python.exe -m staticgen.cli deploy --message "docs: 新增文章：<标题>"
+& .venv-win\Scripts\python.exe -m fastblog.cli deploy --message "docs: 新增文章：<标题>"
 
 # 3. 提交文章到 fastblog 仓库（不提交 .superpowers/、docs/ 等）
 git add content/posts/<slug>.md

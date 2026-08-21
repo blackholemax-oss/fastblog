@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from staticgen.config import Config
-from staticgen.readers import Post
-from staticgen.renderers import JinjaRenderer
+from fastblog.config import Config
+from fastblog.readers import Post
+from fastblog.renderers import JinjaRenderer
 
 
 @dataclass

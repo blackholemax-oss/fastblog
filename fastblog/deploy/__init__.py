@@ -3,6 +3,6 @@
 对外暴露 :class:`GitHubDeployer`。
 """
 
-from staticgen.deploy.github import GitHubDeployer
+from fastblog.deploy.github import GitHubDeployer
 
 __all__ = ["GitHubDeployer"]

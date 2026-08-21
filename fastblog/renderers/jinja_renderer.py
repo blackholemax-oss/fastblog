@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Sequence
 import yaml
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, TemplateNotFound
 
-from staticgen.config import Config
+from fastblog.config import Config
 
 DEFAULT_THEME_NAME = "default"
 

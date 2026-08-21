@@ -7,8 +7,8 @@
 
 示例::
 
-    python -m staticgen.cli build
-    python -m staticgen.cli serve --port 9000
+    python -m fastblog.cli build
+    python -m fastblog.cli serve --port 9000
 """
 
 from __future__ import annotations
@@ -19,9 +19,9 @@ import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from staticgen.config import load_config
-from staticgen.deploy import GitHubDeployer
-from staticgen.engine import BlogGenerator
+from fastblog.config import load_config
+from fastblog.deploy import GitHubDeployer
+from fastblog.engine import BlogGenerator
 
 
 def _build_site(config) -> int:
@@ -234,7 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: 配置完成的解析器。
     """
     parser = argparse.ArgumentParser(
-        prog="staticgen",
+        prog="fastblog",
         description="fastblog —— 将 Markdown 渲染为静态 HTML 网站的生成器。",
     )
     parser.add_argument(

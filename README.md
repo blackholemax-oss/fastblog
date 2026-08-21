@@ -28,16 +28,16 @@ python3 -m venv .venv
 cp config.example.yaml config.yaml
 
 # 3. 构建静态站点到 output/
-.venv/bin/python -m staticgen.cli build
+.venv/bin/python -m fastblog.cli build
 
 # 4. 本地预览 http://127.0.0.1:8000
-.venv/bin/python -m staticgen.cli serve
+.venv/bin/python -m fastblog.cli serve
 
 # 4.1 热部署预览：文件变更后自动构建并刷新浏览器
-.venv/bin/python -m staticgen.cli serve --watch
+.venv/bin/python -m fastblog.cli serve --watch
 
 # 5. 构建并推送部署（需先在 config.yaml 配置 deploy.remote 指向产物仓库的远程名）
-.venv/bin/python -m staticgen.cli deploy
+.venv/bin/python -m fastblog.cli deploy
 ```
 
 ## 命令参考
@@ -54,10 +54,10 @@ cp config.example.yaml config.yaml
 
 ```
 fastblog/
-├── staticgen/            # 核心包（config / cli / engine / readers / renderers / plugins / deploy）
+├── fastblog/            # 核心包（config / cli / engine / readers / renderers / plugins / deploy）
 ├── themes/default/       # 默认主题（templates/ + static/ + theme.yaml）
 ├── content/posts/        # Markdown 内容目录（递归扫描 .md/.markdown/.mdown）
-├── plugins/              # 用户插件目录（继承 staticgen.plugins.Plugin 的 .py 文件）
+├── plugins/              # 用户插件目录（继承 fastblog.plugins.Plugin 的 .py 文件）
 ├── config.example.yaml   # 示例配置（入库模板）
 ├── config.yaml           # 用户本地配置（.gitignore 排除，不入库）
 ├── requirements.txt
@@ -104,7 +104,7 @@ slug: my-first-post      # 可选，默认由标题生成
 在 `plugins/` 目录新建 Python 文件，继承 `Plugin` 并重写钩子即可：
 
 ```python
-from staticgen.plugins import Plugin, PluginContext
+from fastblog.plugins import Plugin, PluginContext
 
 class MyPlugin(Plugin):
     name = "my-plugin"

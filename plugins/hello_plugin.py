@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from staticgen.plugins import Plugin, PluginContext
+from fastblog.plugins import Plugin, PluginContext
 
 
 class HelloPlugin(Plugin):

@@ -17,10 +17,10 @@ from importlib import util as importlib_util
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from staticgen.config import Config
-from staticgen.plugins import Plugin, PluginContext
-from staticgen.readers import Post, read_posts
-from staticgen.renderers import JinjaRenderer, resolve_theme_chain, build_site_context
+from fastblog.config import Config
+from fastblog.plugins import Plugin, PluginContext
+from fastblog.readers import Post, read_posts
+from fastblog.renderers import JinjaRenderer, resolve_theme_chain, build_site_context
 
 
 class BlogGenerator:
@@ -116,7 +116,7 @@ class BlogGenerator:
                 continue
             try:
                 spec = importlib_util.spec_from_file_location(
-                    f"staticgen_user_plugin_{path.stem}", path
+                    f"fastblog_user_plugin_{path.stem}", path
                 )
                 if spec is None or spec.loader is None:
                     print(f"[警告] 无法解析插件文件 {path}，已跳过。")

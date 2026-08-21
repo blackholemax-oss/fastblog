@@ -19,7 +19,7 @@ from typing import Optional
 from git import GitCommandError, GitError, Remote, Repo
 from git.exc import InvalidGitRepositoryError
 
-from staticgen.config import Config
+from fastblog.config import Config
 
 PAGES_WORKFLOW = """name: Deploy static content to Pages
 
@@ -174,7 +174,7 @@ class GitHubDeployer:
         except GitCommandError as exc:
             if "please tell me who you are" in str(exc).lower():
                 author = self.config.site.author
-                email = f"{author}@staticgen.local"
+                email = f"{author}@fastblog.local"
                 try:
                     with repo.config_writer() as writer:
                         writer.set_value("user", "name", author)
