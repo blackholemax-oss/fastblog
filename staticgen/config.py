@@ -133,6 +133,25 @@ class Config:
 # ---------------------------------------------------------------------------
 # 加载逻辑
 # ---------------------------------------------------------------------------
+def _as_bool(value: Any, default: bool) -> bool:
+    """将 YAML 值解析为布尔值，兼容字符串 ``"true"/"false"`` 等写法。
+
+    无法识别时回退到 ``default``，避免字符串 ``"false"`` 被 Python
+    的 ``bool()`` 错误地解析为 ``True``。
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off"}:
+            return False
+    return default
+
+
 def _merge_with_defaults(raw: Dict[str, Any]) -> Dict[str, Any]:
     """将用户配置与默认值合并，缺失字段自动回退。
 
@@ -162,14 +181,14 @@ def _merge_with_defaults(raw: Dict[str, Any]) -> Dict[str, Any]:
         "serve": {
             "host": serve.get("host", DEFAULT_SERVE_HOST),
             "port": int(serve.get("port", DEFAULT_SERVE_PORT)),
-            "open_browser": bool(serve.get("open_browser", DEFAULT_OPEN_BROWSER)),
+            "open_browser": _as_bool(serve.get("open_browser"), DEFAULT_OPEN_BROWSER),
         },
         "deploy": {
-            "enabled": bool(deploy.get("enabled", DEFAULT_DEPLOY_ENABLED)),
+            "enabled": _as_bool(deploy.get("enabled"), DEFAULT_DEPLOY_ENABLED),
             "remote": deploy.get("remote", DEFAULT_DEPLOY_REMOTE),
             "remote_url": deploy.get("remote_url") or None,
             "branch": deploy.get("branch", DEFAULT_DEPLOY_BRANCH),
-            "auto_actions": bool(deploy.get("auto_actions", DEFAULT_AUTO_ACTIONS)),
+            "auto_actions": _as_bool(deploy.get("auto_actions"), DEFAULT_AUTO_ACTIONS),
         },
     }
 

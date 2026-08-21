@@ -33,6 +33,9 @@ cp config.example.yaml config.yaml
 # 4. 本地预览 http://127.0.0.1:8000
 .venv/bin/python -m staticgen.cli serve
 
+# 4.1 热部署预览：文件变更后自动构建并刷新浏览器
+.venv/bin/python -m staticgen.cli serve --watch
+
 # 5. 构建并推送部署（需先在 config.yaml 配置 deploy.remote_url）
 .venv/bin/python -m staticgen.cli deploy
 ```
@@ -42,7 +45,7 @@ cp config.example.yaml config.yaml
 | 命令 | 说明 |
 | --- | --- |
 | `build` | 解析内容、渲染页面，输出到 `output/`（每次自动清空，幂等） |
-| `serve [--host H] [--port P] [--no-browser]` | 本地预览 `output/` |
+| `serve [--host H] [--port P] [--watch] [--no-browser]` | 本地预览 `output/`；`--watch` 开启热部署，监听内容/主题/插件/配置变更后自动构建 |
 | `deploy [--message M]` | 构建 + 自动生成 Actions 工作流 + 强制推送到远程分支 |
 
 全局参数：`--config <path>` 指定配置文件（需置于子命令前），`--version` 查看版本。
@@ -126,3 +129,11 @@ class MyPlugin(Plugin):
 
 `build` / `deploy` 会在项目根目录自动生成 `.github/workflows/staticgen.yml`：
 推送 `main` 分支后，CI 自动安装依赖、构建站点并发布到配置的 `deploy.branch`（默认 `gh-pages`）。
+
+> 该自动生成的工作流默认被 `.gitignore` 排除、不会随仓库提交。
+> 如确需让 GitHub Actions 生效，可手动执行：
+>
+> ```bash
+> git add -f .github/workflows/staticgen.yml
+> git commit -m "chore: 提交 StaticGen Actions 工作流"
+> ```

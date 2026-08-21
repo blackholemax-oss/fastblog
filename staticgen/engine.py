@@ -78,13 +78,14 @@ class BlogGenerator:
         """将各主题的 ``static`` 目录合并拷贝到输出目录。
 
         主题链中子级优先，同名文件由后拷贝者覆盖。
+        实现时先拷贝父主题、再拷贝子主题，确保子主题覆盖父主题。
 
         Args:
             theme_paths: 主题目录列表（子级优先）。
         """
         target = self.config.output_path() / "static"
         copied = 0
-        for theme_dir in theme_paths:
+        for theme_dir in reversed(theme_paths):
             source = theme_dir / "static"
             if not source.is_dir():
                 continue

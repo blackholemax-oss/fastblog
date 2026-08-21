@@ -24,6 +24,21 @@ from staticgen.deploy import GitHubDeployer, ensure_actions_workflow
 from staticgen.engine import BlogGenerator
 
 
+def _build_site(config) -> int:
+    """仅生成静态站点与 Actions 工作流，不触发自动部署。
+
+    Args:
+        config: 全局配置对象。
+
+    Returns:
+        int: 生成的文章数量。
+    """
+    count = BlogGenerator(config).generate()
+    if config.deploy.auto_actions:
+        ensure_actions_workflow(config)
+    return count
+
+
 def _build(args: argparse.Namespace) -> int:
     """执行站点构建流程。
 
@@ -39,9 +54,7 @@ def _build(args: argparse.Namespace) -> int:
     config = load_config(Path(args.config) if args.config else None)
 
     try:
-        count = BlogGenerator(config).generate()
-        if config.deploy.auto_actions:
-            ensure_actions_workflow(config)
+        count = _build_site(config)
         if config.deploy.enabled:
             GitHubDeployer(config).deploy()
     except RuntimeError as exc:
@@ -74,19 +87,18 @@ def _deploy(args: argparse.Namespace) -> int:
     return 0
 
 
-def _serve(args: argparse.Namespace) -> int:
-    """启动本地静态文件预览服务。
+def _serve_static(config, host: str, port: int, args: argparse.Namespace) -> int:
+    """以纯静态方式启动本地预览服务。
 
     Args:
-        args: 解析后的命令行参数（含 ``--config``、``--host``、``--port``）。
+        config: 全局配置对象。
+        host: 监听地址。
+        port: 监听端口。
+        args: 解析后的命令行参数（用于 ``--no-browser``）。
 
     Returns:
         int: 进程退出码，0 表示成功。
     """
-    config = load_config(Path(args.config) if args.config else None)
-
-    host = args.host or config.serve.host
-    port = args.port or config.serve.port
     directory = config.output_path()
 
     if not directory.exists():
@@ -123,6 +135,100 @@ def _serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _serve_watch(config, host: str, port: int, args: argparse.Namespace) -> int:
+    """以热部署方式启动本地预览服务。
+
+    使用 livereload 监听 ``content`` / ``themes`` / ``plugins`` /
+    ``config.yaml`` 变更，文件变化后自动重新构建并刷新浏览器。
+
+    Args:
+        config: 全局配置对象。
+        host: 监听地址。
+        port: 监听端口。
+        args: 解析后的命令行参数（用于 ``--no-browser``）。
+
+    Returns:
+        int: 进程退出码，0 表示成功。
+    """
+    try:
+        from livereload import Server
+    except ImportError:
+        print(
+            "[错误] 热部署需要 livereload 依赖，"
+            "请先执行：pip install -r requirements.txt"
+        )
+        return 1
+
+    directory = config.output_path()
+    try:
+        count = _build_site(config)
+        print(f"[信息] 初始构建完成：共生成 {count} 篇文章到 {directory}。")
+    except RuntimeError as exc:
+        print(f"[错误] 初始构建失败：{exc}")
+        return 1
+
+    server = Server()
+    root = config.root_dir
+
+    def rebuild() -> None:
+        """文件变更后的构建回调。"""
+        try:
+            count = _build_site(config)
+        except RuntimeError as exc:
+            print(f"[警告] 自动构建失败：{exc}")
+            return
+        print(f"[信息] 检测到变更，已自动构建：共生成 {count} 篇文章到 {directory}。")
+
+    watch_paths = [
+        config.content_path(),
+        root / "themes",
+        root / "plugins",
+        root / "config.yaml",
+    ]
+    for path in watch_paths:
+        if path.exists():
+            server.watch(str(path), rebuild)
+
+    url = f"http://{host}:{port}/"
+    print(
+        f"[信息] 热部署预览服务已启动：{url} "
+        "（文件变更后自动构建并刷新浏览器，Ctrl+C 停止）"
+    )
+    try:
+        server.serve(
+            port=port,
+            host=host,
+            root=str(directory),
+            open_url_delay=1 if (config.serve.open_browser and not args.no_browser) else None,
+        )
+    except KeyboardInterrupt:
+        print("\n[信息] 热部署预览服务已停止。")
+    except OSError as exc:
+        print(f"[错误] 无法在 {host}:{port} 启动服务（{exc}），请检查端口是否被占用。")
+        return 1
+    return 0
+
+
+def _serve(args: argparse.Namespace) -> int:
+    """启动本地预览服务。
+
+    Args:
+        args: 解析后的命令行参数（含 ``--config``、``--host``、``--port``、
+            ``--watch``）。
+
+    Returns:
+        int: 进程退出码，0 表示成功。
+    """
+    config = load_config(Path(args.config) if args.config else None)
+
+    host = args.host or config.serve.host
+    port = args.port or config.serve.port
+
+    if args.watch:
+        return _serve_watch(config, host, port, args)
+    return _serve_static(config, host, port, args)
+
+
 def build_parser() -> argparse.ArgumentParser:
     """构建命令行参数解析器。
 
@@ -148,6 +254,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve_parser = subparsers.add_parser("serve", help="本地预览生成的站点")
     serve_parser.add_argument("--host", default=None, help="监听地址（默认取配置）")
     serve_parser.add_argument("--port", type=int, default=None, help="监听端口（默认取配置）")
+    serve_parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="启用热部署：监听 content/themes/plugins/config.yaml，变更后自动构建并刷新浏览器",
+    )
     serve_parser.add_argument("--no-browser", action="store_true", help="不自动打开浏览器")
     serve_parser.set_defaults(func=_serve)
 

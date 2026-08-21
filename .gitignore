@@ -12,4 +12,5 @@ __pycache__/
 # 系统文件
 .DS_Store
 
-.github/
+# 自动生成的 GitHub Actions 工作流（不入库，可按需手动 git add -f 提交）
+.github/workflows/staticgen.yml

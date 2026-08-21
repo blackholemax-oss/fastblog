@@ -220,6 +220,8 @@ def read_posts(content_dir: Path) -> List[Post]:
     """读取内容目录下的全部文章。
 
     依次执行扫描、解析与渲染，并按日期降序排列（无日期的文章排最后）。
+    若多篇文章生成相同的 slug，会自动追加 ``-2``、``-3`` 后缀避免
+    输出文件互相覆盖。
 
     Args:
         content_dir: 内容目录绝对路径。
@@ -228,11 +230,26 @@ def read_posts(content_dir: Path) -> List[Post]:
         List[Post]: 按日期降序排列的文章列表。
     """
     posts: List[Post] = []
+    used_slugs: Dict[str, Path] = {}
     for path in scan_content(content_dir):
         post = parse_post(path, content_dir)
         if post is None:
             continue
         render_post(post)
+
+        original_slug = post.slug
+        if original_slug in used_slugs:
+            base_slug = original_slug
+            counter = 2
+            while f"{base_slug}-{counter}" in used_slugs:
+                counter += 1
+            post.slug = f"{base_slug}-{counter}"
+            print(
+                f"[警告] slug 冲突：{post.source_path} 与 "
+                f"{used_slugs[original_slug]} 都使用「{original_slug}」，"
+                f"已自动调整为「{post.slug}」。"
+            )
+        used_slugs[post.slug] = post.source_path
         posts.append(post)
     posts.sort(key=lambda p: p.date or date.min, reverse=True)
     return posts
