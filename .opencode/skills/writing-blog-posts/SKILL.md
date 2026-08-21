@@ -69,11 +69,11 @@ slug: english-kebab-case   # 必填，小写英文连字符，用于 URL
 
 # 2. 部署到线上（自动恢复 pages.yml、提交产物、推送触发 Actions 发布）
 & .venv-win\Scripts\python.exe -m fastblog.cli deploy --message "docs: 新增文章：<标题>"
-
-# 3. 提交文章到 fastblog 仓库（不提交 .superpowers/、docs/ 等）
-git add content/posts/<slug>.md
-git commit -m "docs: 新增文章：<标题>"
 ```
+
+文章与图片资源（content/、主题 static/ 图片）仅存本地、通过 deploy 命令发布到
+博客仓库（blackholemax-oss.github.io），**绝不提交到 fastblog 源码仓库**
+（已在 .gitignore 排除）。
 
 部署后验证线上可访问：`curl.exe -s https://blackholemax-oss.github.io/posts/<slug>.html`
 （工作流约需 30 秒，必要时先 `gh run list --repo blackholemax-oss/blackholemax-oss.github.io` 查看状态）。
@@ -86,6 +86,6 @@ git commit -m "docs: 新增文章：<标题>"
 | 缺少 summary 或 date | frontmatter 四字段（title/date/tags/summary）+ slug 缺一不可 |
 | 忘记 [TOC] | 正文第一行加入 `[TOC]` |
 | 直接运行 deploy 未先 build | deploy 内置构建，但先用 build 单独验证渲染 |
-| 提交了 .superpowers/、docs/ | 只 add 文章文件 |
+| 把 content/ 或图片 add/commit 到 fastblog 仓库 | 严禁提交，资源只在本地，用 deploy 发布 |
 | build 后 pages.yml 被清空而惊慌 | deploy 命令会自动恢复，无需手动处理 |
 | 文章满屏表格/「本文总结」/对称排比 | 按「去 AI 味」配方重写后再发布 |

@@ -18,8 +18,8 @@ __pycache__/
 # 设计文档等本地资料，不入库
 docs/
 
-# 图片资源不入库（content/ 与主题 static/ 目录下的图片）
-content/**/*.{png,jpg,jpeg,gif,svg,webp,bmp,ico}
+# 文章与图片资源不入库（仅本地构建，通过 deploy 命令发布到博客仓库）
+content/
 themes/**/static/**/*.{png,jpg,jpeg,gif,svg,webp,bmp,ico}
 
 # Windows 本地构建环境
